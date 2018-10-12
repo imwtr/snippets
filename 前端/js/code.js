@@ -410,3 +410,27 @@ $(window).scroll(function () {
         $('.page-go-top').addClass('visible');
     }
 });
+
+// 图片加载出错则使用默认图  已存在的图片
+$('img[data-default]').each(function () {
+    let img = new Image();
+
+    img.onerror = function () {
+        console.log('error', this.src);
+        this.src = this.getAttribute('data-default');
+    }.bind(this);
+
+    img.src = this.src;
+})
+
+// 图片加载出错则使用默认图 未存在的图片
+document.body.addEventListener('error', function (e) {
+    if (e.target.tagName === 'IMG') {
+        let defaultSrc = e.target.getAttribute('data-default');
+
+        if (defaultSrc) {
+            console.log("error", e.target.src);
+            e.target.src = defaultSrc;
+        }
+    }
+}, true);
