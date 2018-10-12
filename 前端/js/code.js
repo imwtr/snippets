@@ -644,3 +644,11 @@ socket.send(JSON.stringify({
     type: 'set',
     id: '...'
 }));
+
+
+
+            // emoji字符检测
+            if (/\ud83c[\udf00-\udfff]|\ud83d[\udc00-\ude4f]|\ud83d[\ude80-\udeff]/g.test($('.name').val())) {
+                alert('请不要输入emoji字符');
+                return;
+            }
