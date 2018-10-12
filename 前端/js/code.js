@@ -434,3 +434,213 @@ document.body.addEventListener('error', function (e) {
         }
     }
 }, true);
+
+
+/**
+ * 页面滚动时 跟进滚动到的位置 导航的锚点自动定位
+ * @return {[type]} [description]
+ */
+function scrollBannerAnchor() {
+    let anchors = [];
+
+    $('.banner a').each(function() {
+        let $this = $(this);
+
+        if ($this.attr('href') === 'javascript:;') {
+            return;
+        }
+
+        let id = $this.attr('href').slice(1),
+            $target = $(`#${id}`);
+
+        $target.is(':visible') && $target.length && anchors.push({
+            $anchor: $this,
+            offsetTop: $target[0].offsetTop
+        });
+    });
+
+    $(document).on('scroll', function() {
+        let t = document.scrollingElement.scrollTop;
+
+        anchors.forEach(item => {
+            if (t >= item.offsetTop) {
+                item.$anchor.addClass('active')
+                    .closest('li').siblings().find('a').removeClass('active');
+            }
+        });
+    });
+}
+
+/**
+ * 获取最近的五分钟 取整
+ * @param  {[type]} d [description]
+ * @return {[type]}   [description]
+ */
+function getCeil5Minutes(d) {
+    var time = 1000 * 60 * 5,
+        curDate = d || +new Date(),
+        addTime = 1000 * 60 * 2.5,
+        addDate = new Date(curDate + addTime),
+        date = new Date(Math.round(addDate / time) * time);
+
+     return getDateTime(date, true);
+}
+
+/**
+ * 替换javascript伪协议中的冒号
+ * @param  {[type]} str [description]
+ * @return {[type]}     [description]
+ */
+function replaceJavascriptScheme(str) {
+    if (!str) {
+        return '';
+    }
+
+    return str.replace(/:/g, encodeURIComponent(':'));
+}
+
+/**
+ * 包装URL，防止xss
+ * @param  {[type]} url) {               url [description]
+ * @return {[type]}      [description]
+ */
+Handlebars.registerHelper('generateURL', function (url) {
+    url = Handlebars.Utils.escapeExpression(url);
+
+    if (!url) {
+        return '';
+    }
+
+    var schemes = ['//', 'http://', 'https://'];
+    var schemeMatch = false;
+
+    schemes.forEach(function(scheme) {
+        if (url.slice(0, scheme.length) === scheme) {
+            url = scheme + replaceJavascriptScheme(url.slice(scheme.length));
+            schemeMatch = true;
+            return false;
+        }
+    });
+
+    return schemeMatch ? url : '//' + replaceJavascriptScheme(url);
+});
+
+/**
+ * 获取带格式的日期
+ * @param  {[type]} text    [description]
+ * @param  {Date}   format) {               var date [description]
+ * @return {[type]}         [description]
+ */
+Handlebars.registerHelper('date_format', function (text, format) {
+    var date = new Date(text == parseInt(text) ? parseInt(text) * 1000 : text)
+
+    var data = {
+        year: date.getFullYear(),
+        year_short: date.getYear(),
+        month: date.getMonth() + 1,
+        day: date.getDate(),
+        hour: date.getHours(),
+        minute: date.getMinutes(),
+        second: date.getSeconds()
+    }
+
+    var addZero = function (num) {
+        num = parseInt(num)
+        return num > 9 ? num : '0' + num
+    }
+
+    format = typeof format == 'object' ? 'yyyy-mm-dd' : format
+    format = format
+        .replace(/yyyy/g, data['year'])
+        .replace(/yy/g, data['year_short'])
+
+        .replace(/mm/g, addZero(data['month']))
+        .replace(/m/g, data['month'])
+
+        .replace(/dd/g, addZero(data['day']))
+        .replace(/d/g, data['day'])
+
+        .replace(/hh/g, addZero(data['hour']))
+        .replace(/h/g, data['hour'])
+
+        .replace(/ii/g, addZero(data['minute']))
+        .replace(/i/g, data['minute'])
+
+        .replace(/ss/g, addZero(data['second']))
+        .replace(/s/g, data['second'])
+
+    return format
+})
+
+// 数字每三位逗号分隔
+Handlebars.registerHelper('thousandCut', function(v) {
+    if (!v && v !== 0) {
+        return '';
+    }
+
+    v = Number(v).toFixed(2);
+
+    return v.toString().replace(/^\d+/, function(v) {
+        return v.replace(/\d{1,3}(?=(\d{3})+$)/g, function(s) {
+            return s + ','
+        });
+    });
+})
+
+
+// 客户端socket连接
+var socket;
+
+connectWS($('.gwrap').attr('data-ws'));
+
+function connectWS(domain) {
+    socket = new WebSocket(domain);
+
+    socket.onerror = function (e) {
+        // console.log('ws error')
+    };
+
+    // 端口重连
+    socket.onclose = function () {
+        // console.log('ws close');
+        setTimeout(function () {
+            connectWS(domain);
+        }, 2000);
+    };
+
+    socket.onopen = function () {
+        // console.log('open');
+
+        // 客户端ID绑定
+        socket.send(JSON.stringify({
+            type: 'bingSomething',
+            id: $('.wrap').attr('data-id')
+        }));
+    };
+
+    // 监听新消息到达 解析
+    socket.onmessage = function (e) {
+        // 不同消息种类进行解决
+        var data;
+
+        try {
+            data = parseJSON(e.data);
+        } catch (e) {
+            data = e.data;
+        }
+
+        if (!data) {
+            return;
+        }
+
+        var type = data.type;
+
+        // 一些处理
+    };
+}
+
+// 发送消息
+socket.send(JSON.stringify({
+    type: 'set',
+    id: '...'
+}));
