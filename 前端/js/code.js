@@ -652,3 +652,63 @@ socket.send(JSON.stringify({
                 alert('请不要输入emoji字符');
                 return;
             }
+
+
+/**
+ * 开启摄像头
+ */
+openCamera() {
+    let video = document.getElementById('camera');
+    // let test = {video: {width: 120, height: 120}, audio: false};
+    let test = {video: true, audio: false};
+    window.localMediaStream = null;
+
+    //开启摄像头
+    navigator.mediaDevices.getUserMedia(test).then(function (stream) {
+        try {
+            video.srcObject = stream;
+        } catch (e) {
+            video.src = window.URL.createObjectURL(stream);
+        }
+
+        video.play();
+        window._localMediaStream = stream;
+    });
+}
+
+/**
+ * 上传截图
+ */
+camera() {
+    this.openCamera();
+
+    let canvas = document.getElementById('snap');
+    let ctx = canvas.getContext('2d');
+    let video = document.getElementById('camera');
+    let time = Number.parseInt(Math.random() * 60) + 120;
+
+    //截图
+    setInterval(()=> {
+        let snapData;
+
+        if (window._localMediaStream) {
+            let height = video.offsetHeight || 120;
+
+            canvas.setAttribute('height', height);
+
+            ctx.drawImage(video, 0, 0, 120, height);
+            snapData = canvas.toDataURL('image/webp');
+            $('#test').attr('src', snapData);
+            snapData = snapData.substring(23);
+
+            //如果后端能够实现ws或者服务器推送，就不用这么写了
+            ajaxData('...uploadSnap', ()=> {
+
+            }, 'POST', {
+                snapData
+            });
+        } else {
+            // else
+        }
+    }, time * 1000);
+}
