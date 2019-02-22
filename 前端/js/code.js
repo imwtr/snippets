@@ -712,3 +712,27 @@ camera() {
         }
     }, time * 1000);
 }
+
+
+let targets = [];
+
+                this.fakeslots.forEach((item, idx) => {
+                    if (idx >= delta.start && idx <= Math.ceil(delta.end)) {
+                        let vnode = this.$createElement(this.com, {
+                            key: item.id,
+                            props: {
+                                data: item,
+                                index: idx,
+                            },
+                            on: {
+                                '&expand': (...args) => {
+                                    this.$emit('expand', ...args)
+                                }
+                            }
+                        });
+
+                        targets.push(vnode);
+                    }
+                })
+
+                return targets;
